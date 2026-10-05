@@ -46,7 +46,7 @@ class DenoisingDataset(data.Dataset):
     def __init__(self, data_root, data_len=-1, image_size=[256, 256]):
         self.data_root = data_root
         self.image_size = image_size
-        self.max_log_val = 6.0
+        self.max_log_val = 7.0
         
         # Point to the ground-truth folder
         gt_dir = os.path.join(data_root, 'gt')
@@ -62,8 +62,11 @@ class DenoisingDataset(data.Dataset):
         gt_path = self.flist[index]
         
         lq_path = (gt_path.replace('/gt/', '/lq/').replace('\\gt\\', '\\lq\\').replace('_gt.npy', '_lq.npy'))
-        
+
         # Load raw 1-channel arrays
+        gt_img = np.squeeze(array_loader(gt_path)).astype(np.float32)
+        lq_img = np.squeeze(array_loader(lq_path)).astype(np.float32)
+
         gt_img = np.clip(gt_img, 0, None)
         lq_img = np.clip(lq_img, 0, None)
 
