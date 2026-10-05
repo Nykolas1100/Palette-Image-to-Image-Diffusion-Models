@@ -1,6 +1,6 @@
 {
     "name": "xray_speckle_denoising",
-    "gpu_ids": [0],
+    "gpu_ids": [0, 1],
     "seed": -1,
     "finetune_norm": false,
 
@@ -26,8 +26,8 @@
             "dataloader": {
                 "validation_split": 10,
                 "args": {
-                    "batch_size": 8,
-                    "num_workers": 4,
+                    "batch_size": 16,
+                    "num_workers": 8,
                     "shuffle": true,
                     "pin_memory": true,
                     "drop_last": true
