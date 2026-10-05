@@ -46,7 +46,7 @@ class DenoisingDataset(data.Dataset):
     def __init__(self, data_root, data_len=-1, image_size=[256, 256]):
         self.data_root = data_root
         self.image_size = image_size
-        self.max_log_val = 10.0 # Adjust this based on your dataset's max log1p(photon_count)
+        self.max_log_val = 6.0
         
         # Point to the ground-truth folder
         gt_dir = os.path.join(data_root, 'gt')
@@ -61,16 +61,14 @@ class DenoisingDataset(data.Dataset):
         ret = {}
         gt_path = self.flist[index]
         
-        # Safely infer the noisy (lq) path from the gt path
-        lq_path = gt_path.replace('/gt/', '/lq/').replace('\\gt\\', '\\lq\\')
+        lq_path = (gt_path.replace('/gt/', '/lq/').replace('\\gt\\', '\\lq\\').replace('_gt.npy', '_lq.npy'))
         
         # Load raw 1-channel arrays
-        gt_img = array_loader(gt_path)
-        lq_img = array_loader(lq_path)
+        gt_img = np.clip(gt_img, 0, None)
+        lq_img = np.clip(lq_img, 0, None)
 
-        # Apply log(1+x) normalization and scale to [-1, 1]
-        gt_img = (np.log1p(gt_img) / self.max_log_val) * 2.0 - 1.0
-        lq_img = (np.log1p(lq_img) / self.max_log_val) * 2.0 - 1.0
+        gt_img = np.clip(np.log1p(gt_img) / self.max_log_val, 0, 1) * 2.0 - 1.0
+        lq_img = np.clip(np.log1p(lq_img) / self.max_log_val, 0, 1) * 2.0 - 1.0
 
         # Convert to float tensor and add the 1-channel dimension: shape [1, H, W]
         gt_tensor = torch.from_numpy(gt_img).float().unsqueeze(0)
