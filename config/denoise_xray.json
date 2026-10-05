@@ -26,8 +26,8 @@
             "dataloader": {
                 "validation_split": 10,
                 "args": {
-                    "batch_size": 32,
-                    "num_workers": 8,
+                    "batch_size": 16,
+                    "num_workers": 4,
                     "shuffle": true,
                     "pin_memory": true,
                     "drop_last": true,
@@ -122,7 +122,7 @@
         "n_epoch": 100000000,
         "n_iter": 10000,
         "val_epoch": 50,
-        "save_checkpoint_epoch": 50,
+        "save_checkpoint_epoch": 10,
         "log_iter": 500,
         "tensorboard": true
     },
