@@ -4,6 +4,8 @@ import importlib
 from datetime import datetime
 import logging
 import pandas as pd
+import numpy as np
+import torch
 
 import core.util as Util
 
@@ -111,8 +113,13 @@ class VisualWriter():
             for i in range(len(names)): 
                 base = os.path.splitext(names[i])[0]
                 Image.fromarray(outputs[i]).save(os.path.join(result_path, base + '.png'))
-        except:
-            raise NotImplementedError('You must specify the context of name and result in save_current_results functions of model.')
+
+                if names[i].startswith(('Out_', 'GT_')):
+                    raw = results['result'][i]
+                    raw = raw.detach().cpu().numpy() if torch.is_tensor(raw) else np.asarray(raw)
+                    np.save(os.path.join(result_path, base + '.npy'), raw.astype(np.float32).squeeze())
+                    except:
+                        raise NotImplementedError('You must specify the context of name and result in save_current_results functions of model.')
 
     def close(self):
         self.writer.close()
