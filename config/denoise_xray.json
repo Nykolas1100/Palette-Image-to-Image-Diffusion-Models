@@ -121,7 +121,7 @@
         "n_iter": 10000,
         "val_epoch": 1,
         "save_checkpoint_epoch": 5,
-        "log_iter": 100,
+        "log_iter": 500,
         "tensorboard": true
     },
 
