@@ -10,6 +10,7 @@ from .util.mask import (bbox2mask, brush_stroke_mask, get_irregular_mask, random
 IMG_EXTENSIONS = [
     '.jpg', '.JPG', '.jpeg', '.JPEG',
     '.png', '.PNG', '.ppm', '.PPM', '.bmp', '.BMP',
+    '.npy', '.NPY', '.tif', '.TIF', '.tiff', '.TIFF'
 ]
 
 def is_image_file(filename):
@@ -31,6 +32,66 @@ def make_dataset(dir):
 
 def pil_loader(path):
     return Image.open(path).convert('RGB')
+
+def array_loader(path):
+    # Load native arrays or TIFFs
+    if path.endswith('.npy') or path.endswith('.NPY'):
+        return np.load(path)
+    else:
+        # Fallback for TIFFs
+        from PIL import Image
+        return np.array(Image.open(path))
+
+class DenoisingDataset(data.Dataset):
+    def __init__(self, data_root, data_len=-1, image_size=[256, 256]):
+        self.data_root = data_root
+        self.image_size = image_size
+        self.max_log_val = 10.0 # Adjust this based on your dataset's max log1p(photon_count)
+        
+        # Point to the ground-truth folder
+        gt_dir = os.path.join(data_root, 'gt')
+        flist = make_dataset(gt_dir)
+        
+        if data_len > 0:
+            self.flist = flist[:int(data_len)]
+        else:
+            self.flist = flist
+
+    def __getitem__(self, index):
+        ret = {}
+        gt_path = self.flist[index]
+        
+        # Safely infer the noisy (lq) path from the gt path
+        lq_path = gt_path.replace('/gt/', '/lq/').replace('\\gt\\', '\\lq\\')
+        
+        # Load raw 1-channel arrays
+        gt_img = array_loader(gt_path)
+        lq_img = array_loader(lq_path)
+
+        # Apply log(1+x) normalization and scale to [-1, 1]
+        gt_img = (np.log1p(gt_img) / self.max_log_val) * 2.0 - 1.0
+        lq_img = (np.log1p(lq_img) / self.max_log_val) * 2.0 - 1.0
+
+        # Convert to float tensor and add the 1-channel dimension: shape [1, H, W]
+        gt_tensor = torch.from_numpy(gt_img).float().unsqueeze(0)
+        lq_tensor = torch.from_numpy(lq_img).float().unsqueeze(0)
+
+        # Resize if images don't match the required U-Net dimensions
+        if gt_tensor.shape[1:] != tuple(self.image_size):
+            gt_tensor = torch.nn.functional.interpolate(
+                gt_tensor.unsqueeze(0), size=self.image_size, mode='bilinear', align_corners=False
+            ).squeeze(0)
+            lq_tensor = torch.nn.functional.interpolate(
+                lq_tensor.unsqueeze(0), size=self.image_size, mode='bilinear', align_corners=False
+            ).squeeze(0)
+
+        ret['gt_image'] = gt_tensor
+        ret['cond_image'] = lq_tensor
+        ret['path'] = gt_path.rsplit("/")[-1].rsplit("\\")[-1]
+        return ret
+
+    def __len__(self):
+        return len(self.flist)
 
 class InpaintDataset(data.Dataset):
     def __init__(self, data_root, mask_config={}, data_len=-1, image_size=[256, 256], loader=pil_loader):

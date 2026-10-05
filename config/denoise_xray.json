@@ -1,0 +1,134 @@
+{
+    "name": "xray_speckle_denoising",
+    "gpu_ids": [0],
+    "seed": -1,
+    "finetune_norm": false,
+
+    "path": {
+        "base_dir": "experiments",
+        "code": "code",
+        "tb_logger": "tb_logger",
+        "results": "results",
+        "checkpoint": "checkpoint",
+        "resume_state": null
+    },
+
+    "datasets": {
+        "train": {
+            "which_dataset": {
+                "name": ["data.dataset", "DenoisingDataset"],
+                "args": {
+                    "data_root": "dataset_npy/train",
+                    "data_len": -1,
+                    "image_size": [128, 128]
+                }
+            },
+            "dataloader": {
+                "validation_split": 2,
+                "args": {
+                    "batch_size": 2,
+                    "num_workers": 2,
+                    "shuffle": true,
+                    "pin_memory": true,
+                    "drop_last": true
+                },
+                "val_args": {
+                    "batch_size": 1,
+                    "num_workers": 2,
+                    "shuffle": false,
+                    "pin_memory": true,
+                    "drop_last": false
+                }
+            }
+        },
+        "val": {
+            "which_dataset": {
+                "name": ["data.dataset", "DenoisingDataset"],
+                "args": {
+                    "data_root": "dataset_npy/val",
+                    "data_len": -1,
+                    "image_size": [128, 128]
+                }
+            },
+            "dataloader": {
+                "args": {
+                    "batch_size": 1,
+                    "num_workers": 2,
+                    "shuffle": false,
+                    "pin_memory": true,
+                    "drop_last": false
+                }
+            }
+        }
+    },
+
+    "model": {
+        "which_model": {
+            "name": ["models.model", "Palette"],
+            "args": {
+                "sample_num": 4,
+                "task": "denoising",
+                "ema_scheduler": {
+                    "ema_start": 1,
+                    "ema_iter": 1,
+                    "ema_decay": 0.9999
+                },
+                "optimizers": [
+                    { "lr": 5e-5, "weight_decay": 0 }
+                ]
+            }
+        },
+        "which_networks": [
+            {
+                "name": ["models.network", "Network"],
+                "args": {
+                    "init_type": "kaiming",
+                    "module_name": "guided_diffusion",
+                    "unet": {
+                        "in_channel": 2,
+                        "out_channel": 1,
+                        "inner_channel": 64,
+                        "channel_mults": [1, 2, 4, 8],
+                        "attn_res": [16],
+                        "num_head_channels": 32,
+                        "res_blocks": 2,
+                        "dropout": 0.2,
+                        "image_size": 128
+                    },
+                    "beta_schedule": {
+                        "train": {
+                            "schedule": "linear",
+                            "n_timestep": 2000,
+                            "linear_start": 1e-6,
+                            "linear_end": 0.01
+                        },
+                        "test": {
+                            "schedule": "linear",
+                            "n_timestep": 1000,
+                            "linear_start": 1e-4,
+                            "linear_end": 0.09
+                        }
+                    }
+                }
+            }
+        ],
+        "which_losses": ["mse_loss"],
+        "which_metrics": ["mae"]
+    },
+
+    "train": {
+        "n_epoch": 100000000,
+        "n_iter": 100000000,
+        "val_epoch": 5,
+        "save_checkpoint_epoch": 10,
+        "log_iter": 100,
+        "tensorboard": true
+    },
+
+    "debug": {
+        "val_epoch": 1,
+        "save_checkpoint_epoch": 1,
+        "log_iter": 2,
+        "debug_split": 50
+    }
+}
