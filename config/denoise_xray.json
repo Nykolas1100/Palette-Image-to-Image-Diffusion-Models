@@ -1,7 +1,7 @@
 {
     "name": "xray_speckle_denoising",
     "gpu_ids": [0],
-    "seed": -1,
+    "seed": 42,
     "finetune_norm": false,
 
     "path": {
@@ -18,13 +18,13 @@
             "which_dataset": {
                 "name": ["data.dataset", "DenoisingDataset"],
                 "args": {
-                    "data_root": "dataset_npy/train",
+                    "data_root": "dataset_npy/all",
                     "data_len": -1,
                     "image_size": [128, 128]
                 }
             },
             "dataloader": {
-                "validation_split": 10,
+                "validation_split": 50,
                 "args": {
                     "batch_size": 16,
                     "num_workers": 4,
@@ -89,11 +89,11 @@
                     "unet": {
                         "in_channel": 2,
                         "out_channel": 1,
-                        "inner_channel": 32,
-                        "channel_mults": [1, 2, 4],
-                        "attn_res": [],
+                        "inner_channel": 64,
+                        "channel_mults": [1, 2, 4, 8],
+                        "attn_res": [16],
                         "num_head_channels": 32,
-                        "res_blocks": 1,
+                        "res_blocks": 2,
                         "dropout": 0.0,
                         "image_size": 128
                     },
@@ -119,11 +119,11 @@
     },
 
     "train": {
-        "n_epoch": 100,
+        "n_epoch": 1000,
         "n_iter": 1000000000,
-        "val_epoch": 50,
-        "save_checkpoint_epoch": 25,
-        "log_iter": 640,
+        "val_epoch": 200,
+        "save_checkpoint_epoch": 100,
+        "log_iter": 960,
         "tensorboard": true
     },
 
