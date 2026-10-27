@@ -1,26 +1,32 @@
 {
     "name": "xray_speckle_denoising",
-    "gpu_ids": [0],
+    "gpu_ids": [
+        0
+    ],
     "seed": 42,
     "finetune_norm": false,
-
     "path": {
         "base_dir": "experiments",
         "code": "code",
         "tb_logger": "tb_logger",
         "results": "results",
         "checkpoint": "checkpoint",
-        "resume_state": null
+        "resume_state": "experiments/train_xray_speckle_denoising_261019_140512/checkpoint/200"
     },
-
     "datasets": {
         "train": {
             "which_dataset": {
-                "name": ["data.dataset", "DenoisingDataset"],
+                "name": [
+                    "data.dataset",
+                    "DenoisingDataset"
+                ],
                 "args": {
-                    "data_root": "dataset_npy/all",
+                    "data_root": "/home/rekasius/xray-data/dataset_npy/all",
                     "data_len": -1,
-                    "image_size": [128, 128]
+                    "image_size": [
+                        128,
+                        128
+                    ]
                 }
             },
             "dataloader": {
@@ -45,11 +51,42 @@
         },
         "val": {
             "which_dataset": {
-                "name": ["data.dataset", "DenoisingDataset"],
+                "name": [
+                    "data.dataset",
+                    "DenoisingDataset"
+                ],
                 "args": {
-                    "data_root": "dataset_npy/val",
+                    "data_root": "/home/rekasius/xray-data/dataset_npy/val",
                     "data_len": -1,
-                    "image_size": [128, 128]
+                    "image_size": [
+                        128,
+                        128
+                    ]
+                }
+            },
+            "dataloader": {
+                "args": {
+                    "batch_size": 1,
+                    "num_workers": 2,
+                    "shuffle": false,
+                    "pin_memory": true,
+                    "drop_last": false
+                }
+            }
+        },
+        "test": {
+            "which_dataset": {
+                "name": [
+                    "data.dataset",
+                    "DenoisingDataset"
+                ],
+                "args": {
+                    "data_root": "/home/rekasius/xray-data/dataset_npy/val",
+                    "data_len": 8,
+                    "image_size": [
+                        128,
+                        128
+                    ]
                 }
             },
             "dataloader": {
@@ -63,10 +100,12 @@
             }
         }
     },
-
     "model": {
         "which_model": {
-            "name": ["models.model", "Palette"],
+            "name": [
+                "models.model",
+                "Palette"
+            ],
             "args": {
                 "sample_num": 1,
                 "task": "denoising",
@@ -76,13 +115,19 @@
                     "ema_decay": 0.999
                 },
                 "optimizers": [
-                    { "lr": 2e-4, "weight_decay": 0 }
+                    {
+                        "lr": 0.0002,
+                        "weight_decay": 0
+                    }
                 ]
             }
         },
         "which_networks": [
             {
-                "name": ["models.network", "Network"],
+                "name": [
+                    "models.network",
+                    "Network"
+                ],
                 "args": {
                     "init_type": "kaiming",
                     "module_name": "guided_diffusion",
@@ -90,7 +135,12 @@
                         "in_channel": 2,
                         "out_channel": 1,
                         "inner_channel": 64,
-                        "channel_mults": [1, 2, 4, 8],
+                        "channel_mults": [
+                            1,
+                            2,
+                            4,
+                            8
+                        ],
                         "attn_res": [],
                         "num_head_channels": 32,
                         "res_blocks": 2,
@@ -101,23 +151,26 @@
                         "train": {
                             "schedule": "linear",
                             "n_timestep": 1000,
-                            "linear_start": 1e-6,
+                            "linear_start": 1e-06,
                             "linear_end": 0.01
                         },
                         "test": {
                             "schedule": "linear",
-                            "n_timestep": 100,
-                            "linear_start": 1e-4,
-                            "linear_end": 0.09
+                            "n_timestep": 1000,
+                            "linear_start": 1e-06,
+                            "linear_end": 0.01
                         }
                     }
                 }
             }
         ],
-        "which_losses": ["mse_loss"],
-        "which_metrics": ["mae"]
+        "which_losses": [
+            "mse_loss"
+        ],
+        "which_metrics": [
+            "mae"
+        ]
     },
-
     "train": {
         "n_epoch": 100,
         "n_iter": 1000000000,
@@ -126,7 +179,6 @@
         "log_iter": 944,
         "tensorboard": true
     },
-
     "debug": {
         "val_epoch": 1,
         "save_checkpoint_epoch": 1,
